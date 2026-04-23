@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements MainInterface, Lo
         //below is not nice or organized but will refactor and improve code next time
         MyListPreference isDownload = new MyListPreference(this);
         isDownload.downloadFilesIfNeeded();
-        new AppRater().app_launched(new WeakReference<>(this));
+        //new AppRater().app_launched(new WeakReference<>(this));
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.container, new MainFragment()).commit();

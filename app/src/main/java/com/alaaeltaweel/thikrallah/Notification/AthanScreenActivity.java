@@ -20,11 +20,10 @@ import com.alaaeltaweel.thikrallah.ThikrMediaPlayerService;
 
 public class AthanScreenActivity extends AppCompatActivity {
 
-    private static final int AUTO_DISMISS_DELAY = 10 * 60 * 1000; // 10 دقايق
+    private static final int AUTO_DISMISS_DELAY = 10 * 60 * 1000;
     private Handler autoHandler = new Handler();
     private String dataType;
 
-    // ✅ Receiver بيستقبل إشارة انتهاء الأذان تلقائياً
     private BroadcastReceiver athanCompleteReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -36,7 +35,6 @@ public class AthanScreenActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // اظهر الشاشة فوق شاشة القفل
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
@@ -55,7 +53,6 @@ public class AthanScreenActivity extends AppCompatActivity {
 
         dataType = getIntent().getStringExtra("com.alaaeltaweel.thikrallah.datatype");
 
-        // اعرض اسم الصلاة
         TextView prayerNameText = findViewById(R.id.prayer_name_text);
         TextView athanText = findViewById(R.id.athan_text);
         Button stopButton = findViewById(R.id.stop_athan_button);
@@ -64,17 +61,13 @@ public class AthanScreenActivity extends AppCompatActivity {
         prayerNameText.setText(prayerName);
         athanText.setText("حان وقت صلاة " + prayerName);
 
-        // زرار إيقاف الأذان
         stopButton.setOnClickListener(v -> stopAthanAndClose());
 
-        // شغل الأذان
         playAthan();
 
-        // اقفل الشاشة تلقائياً بعد 10 دقايق كـ backup
         autoHandler.postDelayed(this::stopAthanAndClose, AUTO_DISMISS_DELAY);
     }
 
-    // ✅ سجّل الـ receiver لما الشاشة تبقى visible
     @Override
     protected void onResume() {
         super.onResume();
@@ -82,7 +75,6 @@ public class AthanScreenActivity extends AppCompatActivity {
                 new IntentFilter("com.alaaeltaweel.thikrallah.ATHAN_COMPLETE"));
     }
 
-    // ✅ إلغاء تسجيل الـ receiver لما الشاشة تتوقف
     @Override
     protected void onPause() {
         super.onPause();
@@ -120,12 +112,16 @@ public class AthanScreenActivity extends AppCompatActivity {
     }
 
     private void stopAthanAndClose() {
-        // ✅ وقف الأذان عبر الـ Service
+        // وقف الصوت مباشرة عبر ThikrMediaPlayerService
         Bundle data = new Bundle();
         data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_STOP);
         data.putString("com.alaaeltaweel.thikrallah.datatype", dataType);
-        Intent intent = new Intent(this, ThikrService.class).putExtras(data);
-        startService(intent);
+        Intent stopMedia = new Intent(this, ThikrMediaPlayerService.class).putExtras(data);
+        startService(stopMedia);
+
+        // وقف ThikrService كمان
+        Intent stopThikr = new Intent(this, ThikrService.class);
+        stopService(stopThikr);
 
         autoHandler.removeCallbacksAndMessages(null);
         finish();

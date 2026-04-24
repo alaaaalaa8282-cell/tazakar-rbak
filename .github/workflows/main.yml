@@ -25,23 +25,30 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Decode Keystore
+      - name: Generate Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+          keytool -genkey -v \
+            -keystore keystore.jks \
+            -alias eltaweel \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass eltaweel123 \
+            -keypass eltaweel123 \
+            -dname "CN=eltaweel, O=eltaweel, C=EG"
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
-        env:
-          KEYSTORE_PATH: keystore.jks
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      - name: Build Signed Release APK
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
+            -Pandroid.injected.signing.store.password=eltaweel123 \
+            -Pandroid.injected.signing.key.alias=eltaweel \
+            -Pandroid.injected.signing.key.password=eltaweel123 \
+            --no-daemon
 
       - name: Create Release and Upload APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          name: "محمد عبد العظيم اذكر ربك - إصدار ${{ github.run_number }}"
+          name: محمد عبد العظيم اذكر ربك - إصدار ${{ github.run_number }}
           files: app/build/outputs/apk/release/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

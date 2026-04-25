@@ -2006,6 +2006,58 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
 
 
 
+    private void incrementVolume() {
+
+        Timber.d("incrementVolume called");
+
+        iVolume = iVolume + 1;
+
+        if (iVolume < INT_VOLUME_MIN)
+
+            iVolume = INT_VOLUME_MIN;
+
+        else if (iVolume > INT_VOLUME_MAX)
+
+            iVolume = INT_VOLUME_MAX;
+
+
+
+        float fVolume = 1 - ((float) Math.log(INT_VOLUME_MAX - iVolume) / (float) Math.log(INT_VOLUME_MAX));
+
+        if (fVolume < FLOAT_VOLUME_MIN)
+
+            fVolume = FLOAT_VOLUME_MIN;
+
+        else if (fVolume > FLOAT_VOLUME_MAX)
+
+            fVolume = FLOAT_VOLUME_MAX;
+
+
+
+        if (player != null) {
+
+            try {
+
+                if (player.isPlaying()) {
+
+                    player.setVolume(fVolume, fVolume);
+
+                }
+
+            } catch (IllegalStateException e) {
+
+                e.printStackTrace();
+
+                Timber.e("%s", e.getMessage());
+
+            }
+
+        }
+
+    }
+
+
+
     @androidx.annotation.RequiresApi(api = Build.VERSION_CODES.S)
 
     private class MyCallStateCallback extends android.telephony.TelephonyCallback
@@ -2035,6 +2087,7 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
     }
 
 }
+
 
 
 

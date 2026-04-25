@@ -36,7 +36,6 @@ import java.util.Locale;
 public class ChatHeadService extends Service implements View.OnTouchListener {
 
 	private WindowManager windowManager;
-	//private ImageView chatHead;
 	private TextView chatHead;
 	String TAG = "ChatHeadService";
 	private final static int NOTIFICATION_ID = 235;
@@ -46,7 +45,6 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// Not used
 		return null;
 	}
 
@@ -56,20 +54,18 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 		NotificationCompat.Builder mBuilder;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-
 			NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-			chan.setSound(null,null);
+			chan.setSound(null, null);
 			chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			assert manager != null;
 			manager.createNotificationChannel(chan);
-			mBuilder = new NotificationCompat.Builder(this,NOTIFICATION_CHANNEL_ID);
-		}else{
+			mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+		} else {
 			mBuilder = new NotificationCompat.Builder(this);
 		}
-		if (thikr==null){
-			this.thikr=getResources().getString(R.string.remember_notification);
+		if (thikr == null) {
+			this.thikr = getResources().getString(R.string.remember_notification);
 		}
 		mBuilder.setContentTitle(this.getString(R.string.my_app_name))
 				.setContentText(thikr)
@@ -78,54 +74,57 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 		mBuilder = setVisibilityPublic(mBuilder);
 		Intent launchAppIntent = new Intent(this, MainActivity.class);
 		PendingIntent launchAppPendingIntent = PendingIntent.getActivity(this,
-				0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT|PendingIntent.FLAG_IMMUTABLE
-		);
-
+				0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 		mBuilder.setContentIntent(launchAppPendingIntent);
 		startForeground(NOTIFICATION_ID, mBuilder.build());
 	}
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-
 		windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-		if (chatHead!=null ){
-			//remove any overlay windows from previous run
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-				if(chatHead.isAttachedToWindow()){
+
+		// ✅ إزالة أي view قديم بأمان
+		if (chatHead != null) {
+			try {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+					if (chatHead.isAttachedToWindow()) {
+						windowManager.removeView(chatHead);
+					}
+				} else {
 					windowManager.removeView(chatHead);
 				}
-			}else{
-				windowManager.removeView(chatHead);
+			} catch (Exception e) {
+				Log.e(TAG, "Error removing old chatHead: " + e.getMessage());
 			}
+			chatHead = null;
 		}
+
 		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String lang=mPrefs.getString("language",null);
-        Log.d(TAG,"chatheadservice started");
-        if (lang!=null){
-            Locale locale = new Locale(lang);
-            Locale.setDefault(locale);
-            Configuration config = new Configuration();
-            config.locale = locale;
-            getBaseContext().getResources().updateConfiguration(config,
-                    getBaseContext().getResources().getDisplayMetrics());
-        }
-        if (intent==null){
-			Log.d(TAG,"starting foreground (null intent?)");
+		String lang = mPrefs.getString("language", null);
+		Log.d(TAG, "chatheadservice started");
+		if (lang != null) {
+			Locale locale = new Locale(lang);
+			Locale.setDefault(locale);
+			Configuration config = new Configuration();
+			config.locale = locale;
+			getBaseContext().getResources().updateConfiguration(config,
+					getBaseContext().getResources().getDisplayMetrics());
+		}
+		if (intent == null) {
+			Log.d(TAG, "starting foreground (null intent?)");
 			startnotification();
 			this.stopSelf();
 			return START_NOT_STICKY;
 		}
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
-		int reminderType=Integer.parseInt(sharedPrefs.getString("RemindmeThroughTheDayType", "1"));
-		if (reminderType==1 ||reminderType==3) {
+		int reminderType = Integer.parseInt(sharedPrefs.getString("RemindmeThroughTheDayType", "1"));
+		if (reminderType == 1 || reminderType == 3) {
 
 			String thikr = intent.getStringExtra("thikr");
 			isAthan = intent.getBooleanExtra("isAthan", false);
 
 			if (isAthan) {
-				NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 				NotificationCompat.Builder mBuilder;
-
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 					String NOTIFICATION_CHANNEL_ID = "com.alaaeltaweel.thikrallah.Notification.AthanTimerService";
 					String channelName = this.getResources().getString(R.string.athan_timer_notifiaction);
@@ -135,44 +134,35 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 					NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					assert manager != null;
 					manager.createNotificationChannel(chan);
-					mBuilder = new NotificationCompat.Builder(this,NOTIFICATION_CHANNEL_ID);
-				}else{
+					mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+				} else {
 					mBuilder = new NotificationCompat.Builder(this);
 				}
 				mBuilder.setContentTitle(this.getString(R.string.my_app_name))
 						.setContentText(thikr)
 						.setSmallIcon(R.drawable.ic_launcher)
 						.setAutoCancel(true);
-
 				mBuilder = setVisibilityPublic(mBuilder);
-
 				Intent launchAppIntent = new Intent(this, MainActivity.class);
-
 				launchAppIntent.putExtra("FromNotification", true);
 				launchAppIntent.putExtra("DataType", MainActivity.DATA_TYPE_ATHAN);
 				PendingIntent launchAppPendingIntent = PendingIntent.getActivity(this,
-						0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT|PendingIntent.FLAG_IMMUTABLE
-				);
-
+						0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 				mBuilder.setContentIntent(launchAppPendingIntent);
-				Log.d(TAG,"starting foreground ( athan)");
+				Log.d(TAG, "starting foreground (athan)");
 				startForeground(NOTIFICATION_ID, mBuilder.build());
-				//mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-
-			}else{
-				Log.d(TAG,"starting foreground (not athan)");
+			} else {
+				Log.d(TAG, "starting foreground (not athan)");
 				startnotification();
-				//mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 			}
-			chatHead=new TextView(this);
+
+			chatHead = new TextView(this);
 			chatHead.setTextAppearance(this.getApplicationContext(), android.R.style.TextAppearance_Large);
 			chatHead.setText(thikr, TextView.BufferType.SPANNABLE);
 			chatHead.setBackgroundResource(R.drawable.chat_head);
 			chatHead.setTextColor(Color.BLACK);
 			chatHead.setGravity(Gravity.CENTER);
-			chatHead.setGravity(Gravity.CENTER);
 
-			//chatHead.setImageResource(R.drawable.chat_head);
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 				params = new WindowManager.LayoutParams(
 						WindowManager.LayoutParams.WRAP_CONTENT,
@@ -180,7 +170,6 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 						WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
 						WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
 						PixelFormat.TRANSLUCENT);
-
 			} else {
 				params = new WindowManager.LayoutParams(
 						WindowManager.LayoutParams.WRAP_CONTENT,
@@ -190,69 +179,71 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 						PixelFormat.TRANSLUCENT);
 			}
 
-
 			params.gravity = Gravity.CENTER;
 			params.x = 0;
 			params.y = 100;
 
-
 			chatHead.setOnTouchListener(this);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				if (Settings.canDrawOverlays(this)) {
-					windowManager.addView(chatHead, params);
-					if (!isAthan){
-						new Handler().postDelayed(new DestroyRunnable(this) , 10000);    //will stop service after 10 seconds
-					}
 
-                }else{
-                    //permission not defined
-                }
-			}else{
-				windowManager.addView(chatHead, params);
-				if (!isAthan){
-					new Handler().postDelayed(new DestroyRunnable(this) , 10000);    //will stop service after 10 seconds
+			// ✅ try-catch عشان التطبيق ميعلقش لو في مشكلة
+			try {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+					if (Settings.canDrawOverlays(this)) {
+						windowManager.addView(chatHead, params);
+						if (!isAthan) {
+							new Handler().postDelayed(new DestroyRunnable(this), 10000);
+						}
+					} else {
+						Log.d(TAG, "No overlay permission - stopping service");
+						this.stopSelf();
+					}
+				} else {
+					windowManager.addView(chatHead, params);
+					if (!isAthan) {
+						new Handler().postDelayed(new DestroyRunnable(this), 10000);
+					}
 				}
+			} catch (Exception e) {
+				Log.e(TAG, "Error adding chatHead view: " + e.getMessage());
+				this.stopSelf();
 			}
 
-		}else{
-			Log.d(TAG,"not reminder type 1 or 3? what then? It is: "+reminderType);
+		} else {
+			Log.d(TAG, "not reminder type 1 or 3? what then? It is: " + reminderType);
 			startnotification();
-	    	this.stopSelf();
+			this.stopSelf();
 		}
 		return START_NOT_STICKY;
-
 	}
 
 	static class DestroyRunnable implements Runnable {
-		public WeakReference<ChatHeadService> getmService() {
-			return mService;
-		}
-
 		private final WeakReference<ChatHeadService> mService;
 
 		DestroyRunnable(ChatHeadService service) {
 			mService = new WeakReference<>(service);
 		}
 
-
 		@Override
 		public void run() {
-			if (mService.get()!=null){
+			if (mService.get() != null) {
 				mService.get().stopSelf();
 			}
 		}
 	}
-    private NotificationCompat.Builder setVisibilityPublic(NotificationCompat.Builder inotificationBuilder){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+	private NotificationCompat.Builder setVisibilityPublic(NotificationCompat.Builder inotificationBuilder) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			inotificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-        }
-        return inotificationBuilder;
-    }
-	@Override 
+		}
+		return inotificationBuilder;
+	}
+
+	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		if (isAthan) {
 			Bundle data = new Bundle();
 			data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_RESET);
+			data.putString("com.alaaeltaweel.thikrallah.datatype", MainActivity.DATA_TYPE_ATHAN1);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 				this.startForegroundService(new Intent(this, ThikrMediaPlayerService.class).putExtras(data));
 			} else {
@@ -262,12 +253,17 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 		stopSelf();
 		return true;
 	}
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d(TAG,"ondestroy called");
-		if (chatHead != null){
-			windowManager.removeView(chatHead);
+		Log.d(TAG, "ondestroy called");
+		if (chatHead != null) {
+			try {
+				windowManager.removeView(chatHead);
+			} catch (Exception e) {
+				Log.e(TAG, "Error removing chatHead on destroy: " + e.getMessage());
+			}
 		}
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.cancel(NOTIFICATION_ID);

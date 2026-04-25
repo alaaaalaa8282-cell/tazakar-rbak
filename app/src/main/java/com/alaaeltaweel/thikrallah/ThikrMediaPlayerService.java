@@ -406,6 +406,10 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
 
                             player.stop();
 
+                            stopService(new Intent(ThikrMediaPlayerService.this,
+
+                                    com.alaaeltaweel.thikrallah.Notification.ChatHeadService.class));
+
                             stopSelf();
 
                         }
@@ -2075,6 +2079,10 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
                 if (player != null && player.isPlaying()) {
 
                     player.stop();
+
+                    stopService(new Intent(ThikrMediaPlayerService.this,
+
+                            com.alaaeltaweel.thikrallah.Notification.ChatHeadService.class));
 
                     ThikrMediaPlayerService.this.stopSelf();
 

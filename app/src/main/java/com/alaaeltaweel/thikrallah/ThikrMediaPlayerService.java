@@ -384,31 +384,9 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 
-            // Android 12+ استخدم TelephonyCallback
+            MyCallStateCallback callbackListener = new MyCallStateCallback();
 
-            tm.registerTelephonyCallback(getMainExecutor(), new android.telephony.TelephonyCallback.CallStateListener() {
-
-                @Override
-
-                public void onCallStateChanged(int state) {
-
-                    if (state == TelephonyManager.CALL_STATE_RINGING ||
-
-                            state == TelephonyManager.CALL_STATE_OFFHOOK) {
-
-                        if (player != null && player.isPlaying()) {
-
-                            player.stop();
-
-                            stopSelf();
-
-                        }
-
-                    }
-
-                }
-
-            });
+            tm.registerTelephonyCallback(getMainExecutor(), callbackListener);
 
         } else {
 
@@ -2028,49 +2006,27 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
 
 
 
-    private void incrementVolume() {
+    @androidx.annotation.RequiresApi(api = Build.VERSION_CODES.S)
 
-        Timber.d("incrementVolume called");
+    private class MyCallStateCallback extends android.telephony.TelephonyCallback
 
-        iVolume = iVolume + 1;
+            implements android.telephony.TelephonyCallback.CallStateListener {
 
-        if (iVolume < INT_VOLUME_MIN)
+        @Override
 
-            iVolume = INT_VOLUME_MIN;
+        public void onCallStateChanged(int state) {
 
-        else if (iVolume > INT_VOLUME_MAX)
+            if (state == TelephonyManager.CALL_STATE_RINGING ||
 
-            iVolume = INT_VOLUME_MAX;
+                    state == TelephonyManager.CALL_STATE_OFFHOOK) {
 
+                if (player != null && player.isPlaying()) {
 
+                    player.stop();
 
-        float fVolume = 1 - ((float) Math.log(INT_VOLUME_MAX - iVolume) / (float) Math.log(INT_VOLUME_MAX));
-
-        if (fVolume < FLOAT_VOLUME_MIN)
-
-            fVolume = FLOAT_VOLUME_MIN;
-
-        else if (fVolume > FLOAT_VOLUME_MAX)
-
-            fVolume = FLOAT_VOLUME_MAX;
-
-
-
-        if (player != null) {
-
-            try {
-
-                if (player.isPlaying()) {
-
-                    player.setVolume(fVolume, fVolume);
+                    stopSelf();
 
                 }
-
-            } catch (IllegalStateException e) {
-
-                e.printStackTrace();
-
-                Timber.e("%s", e.getMessage());
 
             }
 
@@ -2079,5 +2035,6 @@ public class ThikrMediaPlayerService extends Service implements OnCompletionList
     }
 
 }
+
 
 

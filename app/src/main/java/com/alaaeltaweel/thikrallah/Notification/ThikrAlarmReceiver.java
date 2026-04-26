@@ -1,5 +1,8 @@
 package com.alaaeltaweel.thikrallah.Notification;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +11,10 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+
 import com.alaaeltaweel.thikrallah.MainActivity;
+import com.alaaeltaweel.thikrallah.R;
 
 public class ThikrAlarmReceiver extends BroadcastReceiver {
     String TAG = "ThikrAlarmReceiver";
@@ -28,6 +34,13 @@ public class ThikrAlarmReceiver extends BroadcastReceiver {
         if (data == null) return;
 
         String dataType = data.getString("com.alaaeltaweel.thikrallah.datatype");
+
+        // ✅ تنبيه قبل الصلاة بـ 15 دقيقة
+        if (MyAlarmsManager.DATA_TYPE_PRE_ATHAN.equals(dataType)) {
+            String prayerName = data.getString("prayer_name", "الصلاة");
+            showPreAthanNotification(context, prayerName);
+            return;
+        }
 
         // لو الأذان افتح شاشة الأذان
         if (isAthanType(dataType)) {
@@ -49,6 +62,38 @@ public class ThikrAlarmReceiver extends BroadcastReceiver {
                 context.startService(intent2);
             }
         }
+    }
+
+    // ✅ دالة إطلاق الـ notification قبل الصلاة
+    private void showPreAthanNotification(Context context, String prayerName) {
+        String channelId = "pre_athan_reminder";
+        String channelName = "تنبيه اقتراب الصلاة";
+
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("تنبيه قبل وقت الصلاة بـ 15 دقيقة");
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent launchIntent = new Intent(context, MainActivity.class);
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
+                launchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("اقتربت صلاة " + prayerName)
+                .setContentText("تبقى 15 دقيقة على صلاة " + prayerName)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        notificationManager.notify(prayerName.hashCode(), builder.build());
+        Log.d("ThikrAlarmReceiver", "Pre-athan notification shown for " + prayerName);
     }
 
     private boolean isAthanType(String dataType) {

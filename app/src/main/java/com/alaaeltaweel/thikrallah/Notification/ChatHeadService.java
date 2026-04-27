@@ -269,4 +269,4 @@ public class ChatHeadService extends Service implements View.OnTouchListener {
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.cancel(NOTIFICATION_ID);
 	}
-}
+	

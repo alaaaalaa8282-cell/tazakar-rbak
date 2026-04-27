@@ -37,8 +37,7 @@
         android:name="com.alaaeltaweel.thikrallah.quran.labs.androidquran.QuranApplication"
 
         android:allowBackup="true"
-        android:exported="true"
-        android:fullBackupContent="@xml/backup"
+        android:exported="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/my_app_name"
         android:requestLegacyExternalStorage="true"

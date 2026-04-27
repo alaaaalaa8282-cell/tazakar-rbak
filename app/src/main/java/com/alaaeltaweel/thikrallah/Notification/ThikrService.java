@@ -1,140 +1,272 @@
-package com.alaaeltaweel.thikrallah.Notification;
+herepackage com.alaaeltaweel.thikrallah.Notification;
 
-import android.app.KeyguardManager;
-import android.content.BroadcastReceiver;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import com.alaaeltaweel.thikrallah.MainActivity;
 import com.alaaeltaweel.thikrallah.R;
 import com.alaaeltaweel.thikrallah.ThikrMediaPlayerService;
-import com.alaaeltaweel.thikrallah.Notification.ThikrService;
 
-public class AthanScreenActivity extends AppCompatActivity {
+import java.lang.ref.WeakReference;
+import java.util.Locale;
 
-    private static final int AUTO_DISMISS_DELAY = 10 * 60 * 1000;
-    private Handler autoHandler = new Handler();
-    private String dataType;
+public class ChatHeadService extends Service implements View.OnTouchListener {
 
-    private BroadcastReceiver athanCompleteReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            stopAthanAndClose();
-        }
-    };
+	private WindowManager windowManager;
+	private TextView chatHead;
+	String TAG = "ChatHeadService";
+	private final static int NOTIFICATION_ID = 235;
+	WindowManager.LayoutParams params;
+	private String thikr;
+	private boolean isAthan;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true);
-            setTurnScreenOn(true);
-            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            if (km != null) km.requestDismissKeyguard(this, null);
-        } else {
-            getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            );
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
-            getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
-        }
+	private void startnotification() {
+		String NOTIFICATION_CHANNEL_ID = "com.alaaeltaweel.thikrallah.Notification.ChatHeadService";
+		String channelName = this.getResources().getString(R.string.floating_notification);
+		NotificationCompat.Builder mBuilder;
 
-        setContentView(R.layout.activity_athan_screen);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+			chan.setSound(null, null);
+			chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			assert manager != null;
+			manager.createNotificationChannel(chan);
+			mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+		} else {
+			mBuilder = new NotificationCompat.Builder(this);
+		}
+		if (thikr == null) {
+			this.thikr = getResources().getString(R.string.remember_notification);
+		}
+		mBuilder.setContentTitle(this.getString(R.string.my_app_name))
+				.setContentText(thikr)
+				.setSmallIcon(R.drawable.ic_launcher)
+				.setAutoCancel(true);
+		mBuilder = setVisibilityPublic(mBuilder);
+		Intent launchAppIntent = new Intent(this, MainActivity.class);
+		PendingIntent launchAppPendingIntent = PendingIntent.getActivity(this,
+				0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+		mBuilder.setContentIntent(launchAppPendingIntent);
+		startForeground(NOTIFICATION_ID, mBuilder.build());
+	}
 
-        dataType = getIntent().getStringExtra("com.alaaeltaweel.thikrallah.datatype");
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        TextView prayerNameText = findViewById(R.id.prayer_name_text);
-        TextView athanText = findViewById(R.id.athan_text);
-        Button stopButton = findViewById(R.id.stop_athan_button);
+		// ✅ إزالة أي view قديم بأمان
+		if (chatHead != null) {
+			try {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+					if (chatHead.isAttachedToWindow()) {
+						windowManager.removeView(chatHead);
+					}
+				} else {
+					windowManager.removeView(chatHead);
+				}
+			} catch (Exception e) {
+				Log.e(TAG, "Error removing old chatHead: " + e.getMessage());
+			}
+			chatHead = null;
+		}
 
-        String prayerName = getPrayerName(dataType);
-        prayerNameText.setText(prayerName);
-        athanText.setText("حان وقت صلاة " + prayerName);
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String lang = mPrefs.getString("language", null);
+		Log.d(TAG, "chatheadservice started");
+		if (lang != null) {
+			Locale locale = new Locale(lang);
+			Locale.setDefault(locale);
+			Configuration config = new Configuration();
+			config.locale = locale;
+			getBaseContext().getResources().updateConfiguration(config,
+					getBaseContext().getResources().getDisplayMetrics());
+		}
+		if (intent == null) {
+			Log.d(TAG, "starting foreground (null intent?)");
+			startnotification();
+			this.stopSelf();
+			return START_NOT_STICKY;
+		}
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
+		int reminderType = Integer.parseInt(sharedPrefs.getString("RemindmeThroughTheDayType", "1"));
+		if (reminderType == 1 || reminderType == 3) {
 
-        stopButton.setOnClickListener(v -> stopAthanAndClose());
+			String thikr = intent.getStringExtra("thikr");
+			isAthan = intent.getBooleanExtra("isAthan", false);
 
-        playAthan();
+			if (isAthan) {
+				NotificationCompat.Builder mBuilder;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					String NOTIFICATION_CHANNEL_ID = "com.alaaeltaweel.thikrallah.Notification.AthanTimerService";
+					String channelName = this.getResources().getString(R.string.athan_timer_notifiaction);
+					NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+					chan.setSound(null, null);
+					chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+					NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+					assert manager != null;
+					manager.createNotificationChannel(chan);
+					mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+				} else {
+					mBuilder = new NotificationCompat.Builder(this);
+				}
+				mBuilder.setContentTitle(this.getString(R.string.my_app_name))
+						.setContentText(thikr)
+						.setSmallIcon(R.drawable.ic_launcher)
+						.setAutoCancel(true);
+				mBuilder = setVisibilityPublic(mBuilder);
+				Intent launchAppIntent = new Intent(this, MainActivity.class);
+				launchAppIntent.putExtra("FromNotification", true);
+				launchAppIntent.putExtra("DataType", MainActivity.DATA_TYPE_ATHAN);
+				PendingIntent launchAppPendingIntent = PendingIntent.getActivity(this,
+						0, launchAppIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+				mBuilder.setContentIntent(launchAppPendingIntent);
+				Log.d(TAG, "starting foreground (athan)");
+				startForeground(NOTIFICATION_ID, mBuilder.build());
+			} else {
+				Log.d(TAG, "starting foreground (not athan)");
+				startnotification();
+			}
 
-        autoHandler.postDelayed(this::stopAthanAndClose, AUTO_DISMISS_DELAY);
-    }
+			chatHead = new TextView(this);
+			chatHead.setTextAppearance(this.getApplicationContext(), android.R.style.TextAppearance_Large);
+			chatHead.setText(thikr, TextView.BufferType.SPANNABLE);
+			chatHead.setBackgroundResource(R.drawable.chat_head);
+			chatHead.setTextColor(Color.BLACK);
+			chatHead.setGravity(Gravity.CENTER);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(athanCompleteReceiver,
-                new IntentFilter("com.alaaeltaweel.thikrallah.ATHAN_COMPLETE"));
-    }
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+				params = new WindowManager.LayoutParams(
+						WindowManager.LayoutParams.WRAP_CONTENT,
+						WindowManager.LayoutParams.WRAP_CONTENT,
+						WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+						WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+						PixelFormat.TRANSLUCENT);
+			} else {
+				params = new WindowManager.LayoutParams(
+						WindowManager.LayoutParams.WRAP_CONTENT,
+						WindowManager.LayoutParams.WRAP_CONTENT,
+						WindowManager.LayoutParams.TYPE_PHONE,
+						WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+						PixelFormat.TRANSLUCENT);
+			}
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        try {
-            unregisterReceiver(athanCompleteReceiver);
-        } catch (IllegalArgumentException e) {
-        }
-    }
+			params.gravity = Gravity.CENTER;
+			params.x = 0;
+			params.y = 100;
 
-    private String getPrayerName(String dataType) {
-        if (dataType == null) return "الصلاة";
-        switch (dataType) {
-            case MainActivity.DATA_TYPE_ATHAN1: return "الفجر";
-            case MainActivity.DATA_TYPE_ATHAN2:
-                java.util.Calendar cal = java.util.Calendar.getInstance();
-                if (cal.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY) {
-                    return "الجمعة";
-                }
-                return "الظهر";
-            case MainActivity.DATA_TYPE_ATHAN3: return "العصر";
-            case MainActivity.DATA_TYPE_ATHAN4: return "المغرب";
-            case MainActivity.DATA_TYPE_ATHAN5: return "العشاء";
-            default: return "الصلاة";
-        }
-    }
+			chatHead.setOnTouchListener(this);
 
-    private void playAthan() {
-        Bundle data = new Bundle();
-        data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_PLAY);
-        data.putString("com.alaaeltaweel.thikrallah.datatype", dataType);
-        data.putBoolean("isUserAction", false);
+			// ✅ try-catch عشان التطبيق ميعلقش لو في مشكلة
+			try {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+					if (Settings.canDrawOverlays(this)) {
+						windowManager.addView(chatHead, params);
+						if (!isAthan) {
+							new Handler().postDelayed(new DestroyRunnable(this), 10000);
+						}
+					} else {
+    Log.d(TAG, "No overlay permission - stopping service");
+    stopForeground(true);
+    this.stopSelf();
+}  
+				} else {
+					windowManager.addView(chatHead, params);
+					if (!isAthan) {
+						new Handler().postDelayed(new DestroyRunnable(this), 10000);
+					}
+				}
+			} catch (Exception e) {
+				Log.e(TAG, "Error adding chatHead view: " + e.getMessage());
+				this.stopSelf();
+			}
 
-        Intent intent = new Intent(this, ThikrService.class).putExtras(data);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
-        }
-    }
+		} else {
+			Log.d(TAG, "not reminder type 1 or 3? what then? It is: " + reminderType);
+			startnotification();
+			this.stopSelf();
+		}
+		return START_NOT_STICKY;
+	}
 
-    private void stopAthanAndClose() {
-        Bundle data = new Bundle();
-        data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_STOP);
-        data.putString("com.alaaeltaweel.thikrallah.datatype", dataType);
-        Intent stopMedia = new Intent(this, ThikrMediaPlayerService.class).putExtras(data);
-        startService(stopMedia);
+	static class DestroyRunnable implements Runnable {
+		private final WeakReference<ChatHeadService> mService;
 
-        Intent stopThikr = new Intent(this, ThikrService.class);
-        stopService(stopThikr);
+		DestroyRunnable(ChatHeadService service) {
+			mService = new WeakReference<>(service);
+		}
 
-        autoHandler.removeCallbacksAndMessages(null);
-        finish();
-    }
+		@Override
+		public void run() {
+			if (mService.get() != null) {
+				mService.get().stopSelf();
+			}
+		}
+	}
 
-    @Override
-    protected void onDestroy() {
-        autoHandler.removeCallbacksAndMessages(null);
-        super.onDestroy();
-    }
-}
+	private NotificationCompat.Builder setVisibilityPublic(NotificationCompat.Builder inotificationBuilder) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			inotificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+		}
+		return inotificationBuilder;
+	}
+
+	@Override
+	public boolean onTouch(View v, MotionEvent event) {
+		if (isAthan) {
+			Bundle data = new Bundle();
+			data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_RESET);
+			data.putString("com.alaaeltaweel.thikrallah.datatype", MainActivity.DATA_TYPE_ATHAN1);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				this.startForegroundService(new Intent(this, ThikrMediaPlayerService.class).putExtras(data));
+			} else {
+				this.startService(new Intent(this, ThikrMediaPlayerService.class).putExtras(data));
+			}
+		}
+		stopSelf();
+		return true;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		Log.d(TAG, "ondestroy called");
+		if (chatHead != null) {
+			try {
+				windowManager.removeView(chatHead);
+			} catch (Exception e) {
+				Log.e(TAG, "Error removing chatHead on destroy: " + e.getMessage());
+			}
+		}
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(NOTIFICATION_ID);
+	}
+	

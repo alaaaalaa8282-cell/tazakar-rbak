@@ -1,8 +1,10 @@
-package com.HMSolutions.thikrallah.Notification;
+package com.alaaeltaweel.thikrallah.Notification;
 
 import android.app.KeyguardManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,21 +14,27 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.HMSolutions.thikrallah.MainActivity;
-import com.HMSolutions.thikrallah.R;
-import com.HMSolutions.thikrallah.ThikrMediaPlayerService;
+import com.alaaeltaweel.thikrallah.MainActivity;
+import com.alaaeltaweel.thikrallah.R;
+import com.alaaeltaweel.thikrallah.ThikrMediaPlayerService;
 
 public class AthanScreenActivity extends AppCompatActivity {
 
-    private static final int AUTO_DISMISS_DELAY = 10 * 60 * 1000; // 10 دقايق
+    private static final int AUTO_DISMISS_DELAY = 10 * 60 * 1000;
     private Handler autoHandler = new Handler();
     private String dataType;
+
+    private BroadcastReceiver athanCompleteReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopAthanAndClose();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // اظهر الشاشة فوق شاشة القفل
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
@@ -43,9 +51,8 @@ public class AthanScreenActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_athan_screen);
 
-        dataType = getIntent().getStringExtra("com.HMSolutions.thikrallah.datatype");
+        dataType = getIntent().getStringExtra("com.alaaeltaweel.thikrallah.datatype");
 
-        // اعرض اسم الصلاة
         TextView prayerNameText = findViewById(R.id.prayer_name_text);
         TextView athanText = findViewById(R.id.athan_text);
         Button stopButton = findViewById(R.id.stop_athan_button);
@@ -54,14 +61,28 @@ public class AthanScreenActivity extends AppCompatActivity {
         prayerNameText.setText(prayerName);
         athanText.setText("حان وقت صلاة " + prayerName);
 
-        // زرار إيقاف الأذان
         stopButton.setOnClickListener(v -> stopAthanAndClose());
 
-        // شغل الأذان
         playAthan();
 
-        // اقفل الشاشة تلقائياً بعد 10 دقايق
         autoHandler.postDelayed(this::stopAthanAndClose, AUTO_DISMISS_DELAY);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(athanCompleteReceiver,
+                new IntentFilter("com.alaaeltaweel.thikrallah.ATHAN_COMPLETE"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            unregisterReceiver(athanCompleteReceiver);
+        } catch (IllegalArgumentException e) {
+            // في حالة مش مسجل أصلاً
+        }
     }
 
     private String getPrayerName(String dataType) {
@@ -79,7 +100,7 @@ public class AthanScreenActivity extends AppCompatActivity {
     private void playAthan() {
         Bundle data = new Bundle();
         data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_PLAY);
-        data.putString("com.HMSolutions.thikrallah.datatype", dataType);
+        data.putString("com.alaaeltaweel.thikrallah.datatype", dataType);
         data.putBoolean("isUserAction", false);
 
         Intent intent = new Intent(this, ThikrService.class).putExtras(data);
@@ -91,11 +112,16 @@ public class AthanScreenActivity extends AppCompatActivity {
     }
 
     private void stopAthanAndClose() {
-        // وقف الأذان
+        // وقف الصوت مباشرة عبر ThikrMediaPlayerService
         Bundle data = new Bundle();
         data.putInt("ACTION", ThikrMediaPlayerService.MEDIA_PLAYER_STOP);
-        Intent intent = new Intent(this, ThikrService.class).putExtras(data);
-        startService(intent);
+        data.putString("com.alaaeltaweel.thikrallah.datatype", dataType);
+        Intent stopMedia = new Intent(this, ThikrMediaPlayerService.class).putExtras(data);
+        startService(stopMedia);
+
+        // وقف ThikrService كمان
+        Intent stopThikr = new Intent(this, ThikrService.class);
+        stopService(stopThikr);
 
         autoHandler.removeCallbacksAndMessages(null);
         finish();

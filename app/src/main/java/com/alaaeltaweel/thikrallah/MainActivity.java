@@ -387,9 +387,10 @@ public class MainActivity extends AppCompatActivity implements MainInterface, Lo
 
                 if (PreferenceManager.getDefaultSharedPreferences(this).getString("latitude", "0.0").equalsIgnoreCase("0.0")) {
                     buildAlertMessageNoGps();
+               return;
                 }
 
-                return;
+                
             } else {
                 Log.d(TAG, "provider is " + provider.toString());
 

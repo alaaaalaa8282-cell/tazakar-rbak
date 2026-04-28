@@ -119,7 +119,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
-            android:noHistory="true"
+            android:launchMode="singleTop"
             android:theme="@style/AppTheme" />
 
         <service

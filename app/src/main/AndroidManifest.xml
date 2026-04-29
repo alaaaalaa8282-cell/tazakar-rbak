@@ -36,7 +36,6 @@
         android:name="com.alaaeltaweel.thikrallah.quran.labs.androidquran.QuranApplication"
         android:allowBackup="false"
         android:exported="true"
-        android:fullBackupContent="@xml/backup"
         android:icon="@drawable/ic_launcher"
         android:label="@string/my_app_name"
         android:requestLegacyExternalStorage="true"
@@ -118,6 +117,9 @@
     android:exported="false"
     android:showWhenLocked="true"
     android:turnScreenOn="true"
+    android:excludeFromRecents="true"
+    android:noHistory="true"
+    android:taskAffinity=""
     android:theme="@style/AppTheme" />
 
         <service
@@ -167,11 +169,11 @@
         <!-- ✅ ThikrBootReceiver مع directBootAware -->
         <receiver
             android:name="com.alaaeltaweel.thikrallah.Notification.ThikrBootReceiver"
-            android:exported="true"
-            android:directBootAware="true">
+            android:exported="true">
+            
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                
                 <action android:name="com.alaaeltaweel.thikrallah.Notification.ThikrBootReceiver.android.action.broadcast" />
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>

@@ -50,7 +50,7 @@ public class AthanScreenActivity extends AppCompatActivity {
             );
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
         }
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_athan_screen);
 
         dataType = getIntent().getStringExtra("com.alaaeltaweel.thikrallah.datatype");

@@ -319,7 +319,6 @@ public class MyAlarmsManager {
             calendar0.set(Calendar.HOUR_OF_DAY, Integer.parseInt(prayerTimes[prayerPosition].split(":", 3)[0]));
             calendar0.set(Calendar.MINUTE, Integer.parseInt(prayerTimes[prayerPosition].split(":", 3)[1]));
             calendar0.set(Calendar.SECOND, 0);
-            launchIntent.putExtra("scheduled_time", calendar0.getTimeInMillis());
             if (calendar0.after(now)) {
                 setAlarm(calendar0, pendingIntentAthan);
             } else {

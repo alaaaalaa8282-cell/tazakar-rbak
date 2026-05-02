@@ -109,12 +109,11 @@ public class ThikrService extends IntentService  {
         quransettings=QuranSettings.getInstance(mcontext);
         //update all alarms
         Bundle intentData = intent.getExtras();
-String dataTypeCheck = intentData != null ? intentData.getString("com.alaaeltaweel.thikrallah.datatype", "") : "";
-if (!dataTypeCheck.contains(MainActivity.DATA_TYPE_ATHAN)) {
-    Intent boot_reciever = new Intent("com.alaaeltaweel.thikrallah.Notification.ThikrBootReceiver.android.action.broadcast");
-    this.sendBroadcast(boot_reciever);
-}   
-      }
+        String dataTypeCheck = intentData != null ? intentData.getString("com.alaaeltaweel.thikrallah.datatype", "") : "";
+        if (!dataTypeCheck.contains(MainActivity.DATA_TYPE_ATHAN)) {
+            Intent boot_reciever = new Intent("com.alaaeltaweel.thikrallah.Notification.ThikrBootReceiver.android.action.broadcast");
+            this.sendBroadcast(boot_reciever);
+        }
         Log.d(TAG,"onhandleintnet called");
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
         String lang=sharedPrefs.getString("language",null);

@@ -28,9 +28,26 @@ public class AthanScreenActivity extends AppCompatActivity {
 
     private Handler autoHandler = new Handler();
     private Handler slideshowHandler = new Handler();
+    private Handler athanTextHandler = new Handler();
     private String dataType;
     private ImageView fatherBgView;
+    private TextView athanLinesText;
     private int currentPhotoIndex = 0;
+    private int currentAthanLine = 0;
+
+    // كلمات الأذان
+    private String[] athanLines = {
+        "الله أكبر .. الله أكبر",
+        "الله أكبر .. الله أكبر",
+        "أشهد أن لا إله إلا الله",
+        "أشهد أن لا إله إلا الله",
+        "أشهد أن محمداً رسول الله",
+        "أشهد أن محمداً رسول الله",
+        "حي على الصلاة .. حي على الصلاة",
+        "حي على الفلاح .. حي على الفلاح",
+        "الله أكبر .. الله أكبر",
+        "لا إله إلا الله"
+    };
 
     // قائمة صور والدك رحمه الله
     private int[] photos = {
@@ -59,6 +76,35 @@ public class AthanScreenActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable athanTextRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (currentAthanLine < athanLines.length) {
+                showAthanLineWithAnimation(athanLines[currentAthanLine]);
+                currentAthanLine++;
+                athanTextHandler.postDelayed(this, 18000); // كل 18 ثانية
+            }
+        }
+    };
+
+    private void showAthanLineWithAnimation(final String line) {
+        AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
+        fadeOut.setDuration(800);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override public void onAnimationStart(Animation a) {}
+            @Override public void onAnimationRepeat(Animation a) {}
+            @Override
+            public void onAnimationEnd(Animation a) {
+                athanLinesText.setText(line);
+                AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
+                fadeIn.setDuration(800);
+                athanLinesText.startAnimation(fadeIn);
+                athanLinesText.setAlpha(1f);
+            }
+        });
+        athanLinesText.startAnimation(fadeOut);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,11 +123,15 @@ public class AthanScreenActivity extends AppCompatActivity {
             );
         }
 
+        // ✅ خلي الشاشة صاحية طول الأذان
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_athan_screen);
 
         dataType = getIntent().getStringExtra("com.alaaeltaweel.thikrallah.datatype");
 
         fatherBgView = findViewById(R.id.father_bg);
+        athanLinesText = findViewById(R.id.allahu_akbar_text);
         TextView prayerNameText = findViewById(R.id.prayer_name_text);
         TextView athanText = findViewById(R.id.athan_text);
         Button stopButton = findViewById(R.id.stop_athan_button);
@@ -94,6 +144,9 @@ public class AthanScreenActivity extends AppCompatActivity {
 
         // ابدأ الـ slideshow بعد 30 ثانية
         slideshowHandler.postDelayed(slideshowRunnable, SLIDESHOW_INTERVAL);
+
+        // ابدأ animation كلمات الأذان بعد ثانيتين
+        athanTextHandler.postDelayed(athanTextRunnable, 2000);
 
         playAthan();
 
@@ -177,6 +230,7 @@ public class AthanScreenActivity extends AppCompatActivity {
         stopService(stopThikr);
 
         slideshowHandler.removeCallbacksAndMessages(null);
+        athanTextHandler.removeCallbacksAndMessages(null);
         autoHandler.removeCallbacksAndMessages(null);
         finish();
     }
@@ -184,6 +238,7 @@ public class AthanScreenActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         slideshowHandler.removeCallbacksAndMessages(null);
+        athanTextHandler.removeCallbacksAndMessages(null);
         autoHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }

@@ -82,7 +82,7 @@ public class AthanScreenActivity extends AppCompatActivity {
             if (currentAthanLine < athanLines.length) {
                 showAthanLineWithAnimation(athanLines[currentAthanLine]);
                 currentAthanLine++;
-                athanTextHandler.postDelayed(this, 18000); // كل 18 ثانية
+                athanTextHandler.postDelayed(this, 18000); // كل 10 ثانية
             }
         }
     };

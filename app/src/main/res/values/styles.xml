@@ -5,7 +5,7 @@
 
     <style name="AppTheme" parent="AppBaseTheme">
         <item name="android:windowBackground">@color/page_background</item>
-    
+    </style>
     <style name="Divider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">4dp</item>

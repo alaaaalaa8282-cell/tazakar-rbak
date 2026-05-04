@@ -21,6 +21,7 @@ import com.alaaeltaweel.thikrallah.R;
 import com.alaaeltaweel.thikrallah.Utilities.MainInterface;
 import com.alaaeltaweel.thikrallah.hisnulmuslim.DuaGroupActivity;
 import com.alaaeltaweel.thikrallah.quran.labs.androidquran.QuranDataActivity;
+import com.alaaeltaweel.thikrallah.PrayerTrackerActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

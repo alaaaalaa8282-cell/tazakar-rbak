@@ -27,7 +27,7 @@
     <color name="transparent_actionbar_color">#CC0B1120</color>
 
     <!-- ========== ألوان النصوص ========== -->
-    <color name="title_color">#FFFFFF</color>
+    <color name="title_color">#D4AF37</color>
     <color name="header_text_color">#D4AF37</color>
     <color name="sura_number_color">#D4AF37</color>
     <color name="sura_details_color">#C8B88A</color>

@@ -1,4 +1,4 @@
-Enterpackage com.alaaeltaweel.thikrallah.Notification;
+package com.alaaeltaweel.thikrallah.Notification;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;

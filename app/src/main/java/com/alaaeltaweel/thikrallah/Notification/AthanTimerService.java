@@ -64,7 +64,7 @@ public class AthanTimerService extends Service {
                     public void run() {
                         initNotification();
 					}
-				}, 0, 60000);
+				}, 0, 1000);
 			}
 		} else {
 			this.stopSelf();
@@ -215,6 +215,8 @@ public class AthanTimerService extends Service {
 
 		minutesText = minutes + " " + getResources().getString(R.string.minute);
 
-		return hoursText + " " + minutesText + " " + getResources().getString(R.string.until) + " " + prayerName;
+		long seconds = (min % 60) / 1 + 1;
+String secondsText = seconds + " " + getResources().getString(R.string.second);
+return hoursText + " " + minutesText + " " + secondsText + " " + getResources().getString(R.string.until) + " " + prayerName;
 	}
 }

@@ -4,6 +4,7 @@ package com.alaaeltaweel.thikrallah.Fragments;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.icu.util.IslamicCalendar;
 import android.icu.util.ULocale;
 import android.os.Build;
@@ -68,6 +69,9 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
     private TextView countdownTimerView;
     private CountDownTimer countdownTimer;
 
+    // ── الخط الديجيتال ──
+    private Typeface digitalFont;
+
 
     public AthanFragment() {
     }
@@ -113,6 +117,17 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
 
         View view = inflater.inflate(R.layout.athan_fragment, container, false);
 
+        // ── تحميل الخط الديجيتال ──
+        try {
+            digitalFont = Typeface.createFromAsset(
+                    getActivity().getAssets(),
+                    "fonts_2/DSEG7Classic-Regular.ttf"
+            );
+        } catch (Exception e) {
+            Log.e("AthanFragment", "Failed to load digital font: " + e.getMessage());
+            digitalFont = null;
+        }
+
         HijriDate = (TextView) view.findViewById(R.id.Hijri_date);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             IslamicCalendar islamic_cal = (IslamicCalendar) IslamicCalendar
@@ -130,8 +145,20 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
         prayer4_time = (TextView) view.findViewById(R.id.athan_timing4);
         prayer5_time = (TextView) view.findViewById(R.id.athan_timing5);
         sunrise_time = (TextView) view.findViewById(R.id.sunrise_timing1);
+
+        // ── تطبيق الخط الديجيتال على الأوقات والعداد ──
+        if (digitalFont != null) {
+            prayer1_time.setTypeface(digitalFont);
+            prayer2_time.setTypeface(digitalFont);
+            prayer3_time.setTypeface(digitalFont);
+            prayer4_time.setTypeface(digitalFont);
+            prayer5_time.setTypeface(digitalFont);
+            sunrise_time.setTypeface(digitalFont);
+            countdownTimerView.setTypeface(digitalFont);
+        }
+
         is_Manual_Location = (CheckBox) view.findViewById(R.id.is_manual_location);
-        currentLocation = view.findViewById(R.id.current_location);
+        currentLocation    = view.findViewById(R.id.current_location);
 
         boolean isLocationManual = PreferenceManager.getDefaultSharedPreferences(this.getContext()).getBoolean("isCustomLocation", false);
         is_Manual_Location.setChecked(isLocationManual);
@@ -140,11 +167,11 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
         currentLocation.setOnClickListener(this);
         is_Manual_Location.setOnClickListener(this);
 
-        fajr_switch = (SwitchCompat) view.findViewById(R.id.switch1);
-        duhr_switch = (SwitchCompat) view.findViewById(R.id.switch2);
-        asr_switch = (SwitchCompat) view.findViewById(R.id.switch3);
+        fajr_switch    = (SwitchCompat) view.findViewById(R.id.switch1);
+        duhr_switch    = (SwitchCompat) view.findViewById(R.id.switch2);
+        asr_switch     = (SwitchCompat) view.findViewById(R.id.switch3);
         maghrib_switch = (SwitchCompat) view.findViewById(R.id.switch4);
-        ishaa_switch = (SwitchCompat) view.findViewById(R.id.switch5);
+        ishaa_switch   = (SwitchCompat) view.findViewById(R.id.switch5);
 
         fajr_switch.setChecked(mPrefs.getBoolean("isFajrReminder", true));
         duhr_switch.setChecked(mPrefs.getBoolean("isDuhrReminder", true));
@@ -183,7 +210,7 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
     }
 
     private void updateprayerTimes() {
-        double latitude = Double.parseDouble(MainActivity.getLatitude(this.getContext()));
+        double latitude  = Double.parseDouble(MainActivity.getLatitude(this.getContext()));
         double longitude = Double.parseDouble(MainActivity.getLongitude(this.getContext()));
         if (latitude == 0.0 && longitude == 0.0) {
             prayer1_time.setText("NA:NA");
@@ -224,7 +251,6 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
         if (prayers == null) return;
         if (countdownTimer != null) countdownTimer.cancel();
 
-        // الترتيب: فجر(0) ظهر(2) عصر(3) مغرب(5) عشاء(6)
         int[] indices = {0, 2, 3, 5, 6};
         long now = System.currentTimeMillis();
         long millisLeft = -1;
@@ -234,15 +260,14 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
             long t = parseTimeToMillis(prayers[i].getTime());
             if (t > now) {
                 millisLeft = t - now;
-                nextName = prayers[i].getName();
+                nextName   = prayers[i].getName();
                 break;
             }
         }
 
-        // لو كل الصلوات فاتت → الفجر بكرة
         if (millisLeft < 0) {
             millisLeft = parseTimeToMillis(prayers[0].getTime()) + 86400000L - now;
-            nextName = prayers[0].getName();
+            nextName   = prayers[0].getName();
         }
 
         final String finalName = nextName;
@@ -300,8 +325,8 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
 
     private Prayer[] getPrayersArray() {
         PrayTime prayersObject = PrayTime.instancePrayTime(this.getActivity().getApplicationContext());
-        String[] times = prayersObject.getPrayerTimes(this.getActivity().getApplicationContext());
-        String[] names = prayersObject.getTimeNames();
+        String[] times  = prayersObject.getPrayerTimes(this.getActivity().getApplicationContext());
+        String[] names  = prayersObject.getTimeNames();
         Prayer[] prayers = new Prayer[7];
         for (int i = 0; i < 7; i++) {
             prayers[i] = new Prayer(names[i], times[i]);
@@ -311,7 +336,6 @@ public class AthanFragment extends Fragment implements SharedPreferences.OnShare
 
     @Override
     public void onPause() {
-        // إيقاف العداد عند مغادرة الشاشة
         if (countdownTimer != null) countdownTimer.cancel();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity().getApplicationContext());
         prefs.unregisterOnSharedPreferenceChangeListener(this);

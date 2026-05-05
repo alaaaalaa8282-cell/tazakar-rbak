@@ -105,8 +105,20 @@ public class ThikrAlarmReceiver extends BroadcastReceiver {
             try {
                 TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                 if (tm != null && tm.getCallState() != TelephonyManager.CALL_STATE_IDLE) {
-                    Log.d(TAG, "Call in progress, skipping thikr");
-                    return;
+                    Log.d(TAG, "Call in progress, scheduling thikr after 15 min");
+android.app.AlarmManager alarmManager = 
+    (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+android.app.PendingIntent pendingIntent = android.app.PendingIntent.getBroadcast(
+    context,
+    dataType.hashCode() + 9999,
+    new Intent(context, ThikrAlarmReceiver.class).putExtras(data),
+    android.app.PendingIntent.FLAG_UPDATE_CURRENT | 
+    android.app.PendingIntent.FLAG_IMMUTABLE);
+alarmManager.setExactAndAllowWhileIdle(
+    android.app.AlarmManager.RTC_WAKEUP,
+    System.currentTimeMillis() + (15 * 60 * 1000),
+    pendingIntent);
+return;
                 }
             } catch (SecurityException e) {
                 Log.d(TAG, "Cannot check call state, proceeding");

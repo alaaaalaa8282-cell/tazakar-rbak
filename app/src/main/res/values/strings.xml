@@ -274,8 +274,9 @@
     <string name="hour">ساعة</string>
     <string name="hours">ساعات</string>
     <string name="minute">دقيقة</string>
+    <string name="second">ثانية</string>
 
-
+    
     <string name="app_name">تذكر ربك</string>
     <string name="downloadPrompt_title">حمل الملفات المطلوبه؟</string>
     <string name="downloadPrompt"> لكي يعمل التطبيق بنجاح تحتاج لتحميل بعض الملفات الان. إن لم يتم التحميل الان قد لا يعمل التطبيق بشكل صحيح و ستحتاج للاتصال بالنت للقراءة.هل تود التحميل الان؟</string>

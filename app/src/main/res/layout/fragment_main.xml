@@ -214,6 +214,20 @@
                 android:orientation="horizontal">
 
                 <Button
+                    android:id="@+id/button_morning_thikr"
+                    android:layout_width="0dp"
+                    android:layout_height="130dp"
+                    android:layout_weight="1"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/card_bg"
+                    android:drawableTop="@drawable/sun"
+                    android:text="@string/morningThikr"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:gravity="center"
+                    android:padding="10dp" />
+               
+                <Button
                     android:id="@+id/button_night_thikr"
                     android:layout_width="0dp"
                     android:layout_height="130dp"
@@ -227,19 +241,7 @@
                     android:gravity="center"
                     android:padding="10dp" />
 
-                 <Button
-                    android:id="@+id/button_qibla"
-                    android:layout_width="0dp"
-                    android:layout_height="130dp"
-                    android:layout_weight="1"
-                    android:layout_margin="8dp"
-                    android:background="@drawable/card_bg"
-                    android:drawableTop="@drawable/qibla"
-                    android:text="@string/qibla"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:gravity="center"
-                    android:padding="10dp" />
+                 
 
             </LinearLayout>
 
@@ -263,15 +265,15 @@
                     android:gravity="center"
                     android:padding="10dp" />
 
-                <Button
-                    android:id="@+id/button_morning_thikr"
+               <Button
+                    android:id="@+id/button_qibla"
                     android:layout_width="0dp"
                     android:layout_height="130dp"
                     android:layout_weight="1"
                     android:layout_margin="8dp"
                     android:background="@drawable/card_bg"
-                    android:drawableTop="@drawable/sun"
-                    android:text="@string/morningThikr"
+                    android:drawableTop="@drawable/qibla"
+                    android:text="@string/qibla"
                     android:textColor="#FFFFFF"
                     android:textSize="14sp"
                     android:gravity="center"

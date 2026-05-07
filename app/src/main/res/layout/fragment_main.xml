@@ -21,6 +21,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="إهداءً إلى روح والدي الحبيب
+                android:background="#1A2E1A"
 محمد عبد العظيم الطويل
 رحمه الله وأسكنه فسيح جناته"
                 android:textColor="#FFD700"

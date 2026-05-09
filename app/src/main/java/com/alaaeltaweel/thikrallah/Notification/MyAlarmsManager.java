@@ -16,7 +16,6 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.alaaeltaweel.thikrallah.MainActivity;
 import com.alaaeltaweel.thikrallah.R;
@@ -37,16 +36,9 @@ public class MyAlarmsManager {
     public static final int requestCodeAthan3 = 102;
     public static final int requestCodeAthan4 = 103;
     public static final int requestCodeAthan5 = 104;
-
-    // ✅ request codes للتنبيه قبل الصلاة بـ 15 دقيقة
-    public static final int requestCodePreAthan1 = 200;
-    public static final int requestCodePreAthan2 = 201;
-    public static final int requestCodePreAthan3 = 202;
-    public static final int requestCodePreAthan4 = 203;
-    public static final int requestCodePreAthan5 = 204;
-
-    // ✅ الـ datatype للتنبيه قبل الصلاة
-    public static final String DATA_TYPE_PRE_ATHAN = "pre_athan";
+    // ✅ رمضان
+    public static final int requestCodeCannon = 200;
+    public static final int requestCodeMesaharaty = 201;
 
     boolean isPermissionRequested = false;
     AlarmManager alarmMgr;
@@ -58,9 +50,8 @@ public class MyAlarmsManager {
     }
 
     public void UpdateAllApplicableAlarms() {
-        if (context == null) {
-            return;
-        }
+        if (context == null) return;
+
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
         Long timestamp = Calendar.getInstance().getTimeInMillis();
         Long diff = timestamp - sharedPrefs.getLong("lastAlarmsUpdate", 0);
@@ -72,6 +63,7 @@ public class MyAlarmsManager {
         alarmMgr = (AlarmManager) context.getSystemService(ALARM_SERVICE);
         Log.d("MyAlarmsManager", "UpdateAllApplicableAlarms called");
         setPeriodicAlarmManagerUpdates(alarmMgr);
+
         String[] MorningReminderTime = sharedPrefs.getString("daytReminderTime", "8:00").split(":", 3);
         String[] NightReminderTime = sharedPrefs.getString("nightReminderTime", "20:00").split(":", 3);
         String[] kahfReminderTime = sharedPrefs.getString("kahfReminderTime", "10:00").split(":", 3);
@@ -141,7 +133,7 @@ public class MyAlarmsManager {
             alarmMgr.cancel(pendingIntentNightThikr);
         }
 
-        // Random Reminder
+        // General Thikr
         PendingIntent pendingIntentGeneral = PendingIntent.getBroadcast(context, requestCodeRandomAlarm, launchIntent.putExtra("com.alaaeltaweel.thikrallah.datatype", MainActivity.DATA_TYPE_GENERAL_THIKR), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (RemindmeThroughTheDay) {
             alarmMgr.cancel(pendingIntentGeneral);
@@ -173,6 +165,85 @@ public class MyAlarmsManager {
         }
 
         updateAllPrayerAlarms();
+
+        // ✅ جدولة المدفع والمسحراتي في رمضان
+        updateRamadanAlarms();
+    }
+
+    // ===================== ✅ رمضان: مدفع ومسحراتي =====================
+    private void updateRamadanAlarms() {
+        if (context == null || alarmMgr == null) return;
+
+        // تحقق إن دلوقتي رمضان
+        android.icu.util.IslamicCalendar islamicCalendar = new android.icu.util.IslamicCalendar();
+        int hijriMonth = islamicCalendar.get(android.icu.util.Calendar.MONTH);
+        boolean isRamadan = (hijriMonth == 8);
+
+        Intent cannonIntent = new Intent(context, RamadanAlarmReceiver.class);
+        cannonIntent.setAction(RamadanSoundService.ACTION_CANNON);
+        PendingIntent pendingCannon = PendingIntent.getBroadcast(context, requestCodeCannon,
+                cannonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Intent mesaharatyIntent = new Intent(context, RamadanAlarmReceiver.class);
+        mesaharatyIntent.setAction(RamadanSoundService.ACTION_MESAHARATY);
+        PendingIntent pendingMesaharaty = PendingIntent.getBroadcast(context, requestCodeMesaharaty,
+                mesaharatyIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        alarmMgr.cancel(pendingCannon);
+        alarmMgr.cancel(pendingMesaharaty);
+
+        if (!isRamadan) {
+            Log.d(TAG, "Not Ramadan, Ramadan alarms cancelled");
+            return;
+        }
+
+        boolean cannonEnabled = sharedPrefs.getBoolean("ramadan_cannon_enabled", true);
+        boolean mesaharatyEnabled = sharedPrefs.getBoolean("ramadan_mesaharaty_enabled", true);
+
+        Date dat = new Date();
+        Calendar now = Calendar.getInstance();
+        now.setTime(dat);
+
+        // ✅ المدفع — وقت المغرب
+        if (cannonEnabled) {
+            PrayTime prayers = PrayTime.instancePrayTime(context);
+            String[] times = prayers.getPrayerTimes(context);
+            if (times != null && times.length >= 5) {
+                try {
+                    String[] maghribTime = times[4].split(":", 3);
+                    Calendar cannonCal = Calendar.getInstance();
+                    cannonCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(maghribTime[0]));
+                    cannonCal.set(Calendar.MINUTE, Integer.parseInt(maghribTime[1]));
+                    cannonCal.set(Calendar.SECOND, 0);
+                    if (!cannonCal.after(now)) {
+                        cannonCal.add(Calendar.HOUR, 24);
+                    }
+                    setAlarm(cannonCal, pendingCannon);
+                    Log.d(TAG, "Cannon alarm set at: " + cannonCal.getTime());
+                } catch (Exception e) {
+                    Log.e(TAG, "Error setting cannon alarm: " + e.getMessage());
+                }
+            }
+        }
+
+        // ✅ المسحراتي — الوقت اللي يحدده المستخدم
+        if (mesaharatyEnabled) {
+            String mesaharatyTimeStr = sharedPrefs.getString("mesaharaty_time", "03:00");
+            try {
+                String[] mesaharatyTimeParts = mesaharatyTimeStr.split(":", 3);
+                Calendar mesaharatyCal = Calendar.getInstance();
+                mesaharatyCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(mesaharatyTimeParts[0]));
+                mesaharatyCal.set(Calendar.MINUTE, Integer.parseInt(mesaharatyTimeParts[1]));
+                mesaharatyCal.set(Calendar.SECOND, 0);
+                if (!mesaharatyCal.after(now)) {
+                    mesaharatyCal.add(Calendar.HOUR, 24);
+                }
+                setAlarm(mesaharatyCal, pendingMesaharaty);
+                Log.d(TAG, "Mesaharaty alarm set at: " + mesaharatyCal.getTime());
+            } catch (Exception e) {
+                Log.e(TAG, "Error setting mesaharaty alarm: " + e.getMessage());
+            }
+        }
     }
 
     @SuppressLint("NewApi")
@@ -181,7 +252,7 @@ public class MyAlarmsManager {
         Date dat = new Date();
         Calendar now = Calendar.getInstance();
         now.setTime(dat);
-        Log.d("MyAlarmsManager", "setting alarm. is after?" + time.after(now) + " now is " + now.getTime() + " alarm is " + time.getTime());
+        Log.d("MyAlarmsManager", "was able to set exact alarm. is after?" + time.after(now) + " now is " + now.getTime() + " alarm is " + time.getTime());
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             alarmMgr.set(AlarmManager.RTC_WAKEUP, timeInMilliseconds, pendingIntent);
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -192,7 +263,9 @@ public class MyAlarmsManager {
             } else {
                 if (alarmMgr.canScheduleExactAlarms()) {
                     alarmMgr.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMilliseconds, pendingIntent);
+                    Log.d("MyAlarmsManager", "was able to set exact alarm");
                 } else {
+                    Log.d("MyAlarmsManager", "unable to set exact alarm due to permission issue. Requesting permission");
                     requestExactAlarmPermission();
                 }
             }
@@ -242,22 +315,17 @@ public class MyAlarmsManager {
     }
 
     void setPeriodicAlarmManagerUpdates(AlarmManager alarmmnager) {
-        if (context == null) {
-            return;
-        }
+        if (context == null) return;
         Intent launchIntent = new Intent(context, ThikrBootReceiver.class);
         launchIntent.setAction("com.alaaeltaweel.thikrallah.Notification.ThikrBootReceiver.android.action.broadcast");
         Date dat = new Date();
         Calendar now = Calendar.getInstance();
         now.setTime(dat);
-
         PendingIntent intent = PendingIntent.getBroadcast(context, 100, launchIntent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
-
         Calendar calendar1 = Calendar.getInstance();
         calendar1.set(Calendar.HOUR_OF_DAY, 1);
         calendar1.set(Calendar.MINUTE, 15);
         calendar1.set(Calendar.SECOND, 0);
-
         if (calendar1.after(now)) {
             alarmmnager.setRepeating(AlarmManager.RTC_WAKEUP, calendar1.getTimeInMillis(), 12 * 60 * 60 * 1000, intent);
         } else {
@@ -276,42 +344,31 @@ public class MyAlarmsManager {
     }
 
     private void updateAllPrayerAlarms() {
-        if (context == null) {
-            return;
-        }
+        if (context == null) return;
         double latitude = Double.parseDouble(MainActivity.getLatitude(context));
         double longitude = Double.parseDouble(MainActivity.getLongitude(context));
-        if (latitude == 0 && longitude == 0) {
-            return;
-        }
-        updatePrayerAlarms(requestCodeAthan1, requestCodePreAthan1, "isFajrReminder", 0, MainActivity.DATA_TYPE_ATHAN1, "الفجر");
-        updatePrayerAlarms(requestCodeAthan2, requestCodePreAthan2, "isDuhrReminder", 2, MainActivity.DATA_TYPE_ATHAN2, "الظهر");
-        updatePrayerAlarms(requestCodeAthan3, requestCodePreAthan3, "isAsrReminder", 3, MainActivity.DATA_TYPE_ATHAN3, "العصر");
-        updatePrayerAlarms(requestCodeAthan4, requestCodePreAthan4, "isMaghribReminder", 5, MainActivity.DATA_TYPE_ATHAN4, "المغرب");
-        updatePrayerAlarms(requestCodeAthan5, requestCodePreAthan5, "isIshaaReminder", 6, MainActivity.DATA_TYPE_ATHAN5, "العشاء");
+        if (latitude == 0 && longitude == 0) return;
+        updatePrayerAlarms(requestCodeAthan1, "isFajrReminder", 0, MainActivity.DATA_TYPE_ATHAN1);
+        updatePrayerAlarms(requestCodeAthan2, "isDuhrReminder", 2, MainActivity.DATA_TYPE_ATHAN2);
+        updatePrayerAlarms(requestCodeAthan3, "isAsrReminder", 3, MainActivity.DATA_TYPE_ATHAN3);
+        updatePrayerAlarms(requestCodeAthan4, "isMaghribReminder", 5, MainActivity.DATA_TYPE_ATHAN4);
+        updatePrayerAlarms(requestCodeAthan5, "isIshaaReminder", 6, MainActivity.DATA_TYPE_ATHAN5);
     }
 
-    private void updatePrayerAlarms(int requestCode, int preRequestCode, String isReminderPreference, int prayerPosition, String datatype, String prayerName) {
-        if (context == null) {
-            return;
-        }
+    private void updatePrayerAlarms(int requestCode, String isReminderPreference, int prayerPosition, String datatype) {
+        if (context == null) return;
         PrayTime prayers = PrayTime.instancePrayTime(context);
         prayers.setTimeFormat(PrayTime.TIME_FORMAT_Time24);
         String[] prayerTimes = prayers.getPrayerTimes(context);
+        if (prayerTimes[prayerPosition].equalsIgnoreCase(prayers.getInvalidTime())) return;
 
-        if (prayerTimes[prayerPosition].equalsIgnoreCase(prayers.getInvalidTime())) {
-            return;
-        }
         boolean isAthanReminder = sharedPrefs.getBoolean(isReminderPreference, true);
-        boolean isPreAthanReminder = sharedPrefs.getBoolean("isPreAthanReminder", true);
-
         Intent launchIntent = new Intent(context, ThikrAlarmReceiver.class);
 
         Date dat = new Date();
         Calendar now = Calendar.getInstance();
         now.setTime(dat);
 
-        // ✅ الأذان
         PendingIntent pendingIntentAthan = PendingIntent.getBroadcast(context, requestCode, launchIntent.putExtra("com.alaaeltaweel.thikrallah.datatype", datatype), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         alarmMgr.cancel(pendingIntentAthan);
         if (isAthanReminder) {
@@ -325,30 +382,8 @@ public class MyAlarmsManager {
                 calendar0.add(Calendar.HOUR, 24);
                 setAlarm(calendar0, pendingIntentAthan);
             }
-        }
-
-        // ✅ تنبيه قبل الصلاة بـ 15 دقيقة
-        Intent preAthanIntent = new Intent(context, ThikrAlarmReceiver.class);
-        preAthanIntent.putExtra("com.alaaeltaweel.thikrallah.datatype", DATA_TYPE_PRE_ATHAN);
-        preAthanIntent.putExtra("prayer_name", prayerName);
-
-        PendingIntent pendingIntentPreAthan = PendingIntent.getBroadcast(context, preRequestCode, preAthanIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        alarmMgr.cancel(pendingIntentPreAthan);
-
-        if (isAthanReminder && isPreAthanReminder) {
-            Calendar calendarPre = Calendar.getInstance();
-            calendarPre.set(Calendar.HOUR_OF_DAY, Integer.parseInt(prayerTimes[prayerPosition].split(":", 3)[0]));
-            calendarPre.set(Calendar.MINUTE, Integer.parseInt(prayerTimes[prayerPosition].split(":", 3)[1]));
-            calendarPre.set(Calendar.SECOND, 0);
-            calendarPre.add(Calendar.MINUTE, -15); // ✅ 15 دقيقة قبل الصلاة
-
-            if (calendarPre.after(now)) {
-                setAlarm(calendarPre, pendingIntentPreAthan);
-                Log.d(TAG, "pre-athan reminder set for " + prayerName + " at " + calendarPre.getTime());
-            } else {
-                calendarPre.add(Calendar.HOUR, 24);
-                setAlarm(calendarPre, pendingIntentPreAthan);
-            }
+        } else {
+            alarmMgr.cancel(pendingIntentAthan);
         }
     }
 }

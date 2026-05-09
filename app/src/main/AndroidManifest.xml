@@ -190,6 +190,16 @@
             </intent-filter>
         </receiver>
 
+     <service
+    android:name="com.alaaeltaweel.thikrallah.Notification.RamadanSoundService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="mediaPlayback" />
+
+<receiver
+    android:name="com.alaaeltaweel.thikrallah.Notification.RamadanAlarmReceiver"
+    android:exported="false" />
+        
         <activity
             android:name="com.alaaeltaweel.thikrallah.quran.labs.androidquran.QuranDataActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"

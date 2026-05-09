@@ -24,8 +24,8 @@
             android:defaultValue="100"
             android:key="volume"
             android:title="@string/volume_level"/>
-
     </PreferenceCategory>
+
     <PreferenceCategory
         android:title="@string/quiet_time"
         android:layout="@layout/preference_catagory">
@@ -33,7 +33,6 @@
             android:defaultValue="true"
             android:key="quiet_time_choice"
             android:title="@string/quiet_time_choice" />
-
         <com.alaaeltaweel.thikrallah.Utilities.TimePreference
             android:defaultValue="22:00"
             android:key="quiet_time_start"
@@ -48,6 +47,7 @@
             android:title="@string/quiet_time_after_athan_choice"
             android:summary="@string/quiet_time_after_athan_choice_summary" />
     </PreferenceCategory>
+
     <PreferenceCategory
         android:title="@string/morningThikrSettings"
         android:layout="@layout/preference_catagory">
@@ -55,12 +55,10 @@
             android:defaultValue="true"
             android:key="remindMeMorningThikr"
             android:title="@string/remindMeMorningThikr" />
-
         <com.alaaeltaweel.thikrallah.Utilities.TimePreference
             android:defaultValue="08:00"
             android:key="daytReminderTime"
             android:title="@string/changeReminderTime" />
-
         <com.alaaeltaweel.thikrallah.Utilities.MyListPreference
             android:defaultValue="1"
             android:entries="@array/RemindmeType"
@@ -68,6 +66,7 @@
             android:key="remindMeDayThikrType"
             android:title="@string/general_thikr_reminder_type" />
     </PreferenceCategory>
+
     <PreferenceCategory
         android:title="@string/nightThikrSettings"
         android:layout="@layout/preference_catagory">
@@ -75,12 +74,10 @@
             android:defaultValue="true"
             android:key="remindMeNightThikr"
             android:title="@string/remindMeNightThikr" />
-
         <com.alaaeltaweel.thikrallah.Utilities.TimePreference
             android:defaultValue="20:00"
             android:key="nightReminderTime"
             android:title="@string/changeReminderTime" />
-
         <com.alaaeltaweel.thikrallah.Utilities.MyListPreference
             android:defaultValue="1"
             android:entries="@array/RemindmeType"
@@ -102,12 +99,10 @@
             android:defaultValue="true"
             android:key="remindMekahf"
             android:title="@string/remindMekahf" />
-
         <com.alaaeltaweel.thikrallah.Utilities.TimePreference
             android:defaultValue="10:00"
             android:key="kahfReminderTime"
             android:title="@string/changeReminderTime" />
-
         <com.alaaeltaweel.thikrallah.Utilities.MyListPreference
             android:defaultValue="1"
             android:entries="@array/RemindmeType"
@@ -118,18 +113,41 @@
             android:defaultValue="true"
             android:key="@string/remindMemulk"
             android:title="@string/remindMemulk" />
-
         <com.alaaeltaweel.thikrallah.Utilities.TimePreference
             android:defaultValue="21:00"
             android:key="mulkReminderTime"
             android:title="@string/changeReminderTime" />
-
         <com.alaaeltaweel.thikrallah.Utilities.MyListPreference
             android:defaultValue="1"
             android:entries="@array/RemindmeType"
             android:entryValues="@array/RemindmeTypeValues"
             android:key="remindMemulkType"
             android:title="@string/mulk_reminder_type" />
+    </PreferenceCategory>
+
+    <!-- ✅ إعدادات رمضان -->
+    <PreferenceCategory
+        android:title="إعدادات رمضان 🌙"
+        android:layout="@layout/preference_catagory">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ramadan_cannon_enabled"
+            android:title="مدفع رمضان 🔊"
+            android:summary="يشتغل وقت الإفطار في رمضان" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ramadan_mesaharaty_enabled"
+            android:title="المسحراتي 🥁"
+            android:summary="يشتغل في الوقت الذي تحدده" />
+
+        <com.alaaeltaweel.thikrallah.Utilities.TimePreference
+            android:defaultValue="03:00"
+            android:key="mesaharaty_time"
+            android:title="وقت المسحراتي"
+            android:dependency="ramadan_mesaharaty_enabled" />
 
     </PreferenceCategory>
+
 </PreferenceScreen>

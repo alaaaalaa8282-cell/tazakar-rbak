@@ -16,57 +16,69 @@
             android:orientation="vertical"
             android:padding="12dp">
 
-            <!-- إهداء -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="إهداءً إلى روح والدي الحبيب
-محمد عبد العظيم الطويل
-رحمه الله وأسكنه فسيح جناته"
-                android:textColor="#FFD700"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp"
-                android:background="#1A2E1A"
-                android:lineSpacingMultiplier="1.5"/>
+           <!-- الإهداء والصورة جنب بعض -->
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="#1A2E1A"
+    android:gravity="center"
+    android:padding="16dp"
+    android:layout_marginBottom="8dp">
 
-            <!-- بانر والد -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="16dp">
+    <!-- الإهداء (النص) -->
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="إهداءً إلى روح والدي الحبيب\nمحمد عبد العظيم الطويل\nرحمه الله وأسكنه فسيح جناته"
+        android:textColor="#FFD700"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.5"/>
 
-                <ImageView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:src="@drawable/father_photo"
-                    android:scaleType="centerCrop" />
+    <!-- فاصل عمودي -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="48dp"
+        android:background="#FFD700"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="محمد عبد العظيم طرفايه الطويل"
-                    android:textColor="#FFD700"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center" />
+    <!-- صورة الوالد والنص -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="رحمه الله وأسكنه فسيح جناته"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center" />
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/father_photo"
+            android:scaleType="centerCrop"/>
 
-            </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="محمد عبد العظيم طرفايه الطويل"
+            android:textColor="#FFD700"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:gravity="center"/>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="رحمه الله وأسكنه فسيح جناته"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:gravity="center"/>
+
+    
+</LinearLayout>
             <!-- ✅ كارد التاريخ والرمضان -->
             <LinearLayout
                 android:id="@+id/date_ramadan_card"

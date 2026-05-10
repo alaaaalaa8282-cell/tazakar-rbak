@@ -76,7 +76,7 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:gravity="center"/>
-
+</LinearLayout>
     
 </LinearLayout>
             <!-- ✅ كارد التاريخ والرمضان -->

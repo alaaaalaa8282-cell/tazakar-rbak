@@ -24,6 +24,7 @@ import com.alaaeltaweel.thikrallah.Utilities.MainInterface;
 import com.alaaeltaweel.thikrallah.Utilities.PrayTime;
 import com.alaaeltaweel.thikrallah.hisnulmuslim.DuaGroupActivity;
 import com.alaaeltaweel.thikrallah.quran.labs.androidquran.QuranDataActivity;
+import com.alaaeltaweel.thikrallah.PrayerTrackerActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -85,7 +86,8 @@ public class MainFragment extends Fragment {
         Button button_hisn_almuslim = (Button) view.findViewById(R.id.hisn_almuslim);
         Button button_athan = (Button) view.findViewById(R.id.button_athan);
         Button button_qibla = (Button) view.findViewById(R.id.button_qibla);
-
+        Button button_prayer_tracker = (Button) view.findViewById(R.id.button_prayer_tracker);
+        
         // ✅ Views التاريخ والرمضان
         textGregorianDate  = view.findViewById(R.id.text_gregorian_date);
         textHijriDate      = view.findViewById(R.id.text_hijri_date);
